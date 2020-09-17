@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: messaging-sqs-example
+
+Resources:
+  MySqsQueue:
+    Type: AWS::SQS::Queue
+
+  QueuePublisherFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: code/
+      Handler: publisher.handler
+      Runtime: nodejs12.x
+      Timeout: 3
+      MemorySize: 128
+      Environment:
+        Variables:
+          SQSqueueName: !Ref MySqsQueue
+      Policies:
+        ## Read more about SAM Policy templates at:
+        ## https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt MySqsQueue.QueueName
+
+  QueueConsumerFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: code/
+      Handler: consumer.handler
+      Runtime: nodejs12.x
+      Timeout: 3
+      MemorySize: 128
+      # ReservedConcurrentExecutions: 1
+      Policies:  
+        - SQSPollerPolicy:
+            QueueName: !GetAtt MySqsQueue.QueueName
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MySqsQueue.Arn
+            BatchSize: 10
+
+Outputs:
+  QueuePublisherFunction:
+    Description: QueuePublisherFunction function name
+    Value: !Ref QueuePublisherFunction
+  QueueConsumerFunction:
+    Description: QueueConsumerFunction function name
+    Value: !Ref QueueConsumerFunction

@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: messaging-eventbridge-sqs-example
+  
+Resources:
+  MySqsQueue:
+    Type: AWS::SQS::Queue
+
+  QueueConsumerFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: code/
+      Handler: consumer.handler
+      Runtime: nodejs12.x
+      Timeout: 3
+      MemorySize: 128
+      # ReservedConcurrentExecutions: 1
+      Policies:  
+        - SQSPollerPolicy:
+            QueueName: !GetAtt MySqsQueue.QueueName
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MySqsQueue.Arn
+            BatchSize: 10
+
+  EventRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "EventRule"
+      EventPattern: 
+        account: 
+          - !Sub '${AWS::AccountId}'
+        source:
+          - "demo.cli"
+      Targets: 
+        - Arn: !GetAtt MySqsQueue.Arn
+          Id: "SQSqueue"
+
+  # Use AWS::SNS::Subscription resource to apply filter policy
+  EventBridgeToToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: events.amazonaws.com
+          Action: SQS:SendMessage
+          Resource:  !GetAtt MySqsQueue.Arn
+      Queues:
+        - Ref: MySqsQueue
+
+Outputs:
+  QueueConsumerFunction:
+    Description: QueueConsumerFunction function name
+    Value: !Ref QueueConsumerFunction
+
+

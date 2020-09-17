@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: messaging-sns-example
+
+Resources:
+  MySnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt TopicConsumerFunction1.Arn    
+        - Protocol: lambda
+          Endpoint: !GetAtt TopicConsumerFunction2.Arn    
+
+  TopicConsumerFunction1Permission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref TopicConsumerFunction1
+      Principal: sns.amazonaws.com
+
+  TopicConsumerFunction2Permission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref TopicConsumerFunction2
+      Principal: sns.amazonaws.com
+
+  TopicPublisherFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: code/
+      Handler: publisher.handler
+      Runtime: nodejs12.x
+      Timeout: 3
+      MemorySize: 128
+      Environment:
+        Variables:
+          SNStopic: !Ref MySnsTopic
+      Policies:
+        ## Read more about SAM Policy templates at:
+        ## https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt MySnsTopic.TopicName
+
+  TopicConsumerFunction1:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: code/
+      Handler: consumer.handler
+      Runtime: nodejs12.x
+      Timeout: 3
+      MemorySize: 128
+
+  TopicConsumerFunction2:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: code/
+      Handler: consumer.handler
+      Runtime: nodejs12.x
+      Timeout: 3
+      MemorySize: 128
+
+Outputs:
+  TopicPublisherFunction:
+    Description: TopicPublisherFunction function name
+    Value: !Ref TopicPublisherFunction
+  TopicConsumerFunction1:
+    Description: TopicConsumerFunction1 function name
+    Value: !Ref TopicConsumerFunction1
+  TopicConsumerFunction2:
+    Description: TopicConsumerFunction2 function name
+    Value: !Ref TopicConsumerFunction2

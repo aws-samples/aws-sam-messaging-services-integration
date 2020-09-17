@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: messaging-sns-to-sqs-with-filtering
+
+Resources:
+  MySqsQueue:
+    Type: AWS::SQS::Queue
+
+  MySnsTopic:
+    Type: AWS::SNS::Topic
+
+  # Use AWS::SNS::Subscription resource to apply filter policy
+  QueueSubcription:
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: !Ref MySnsTopic
+      Endpoint: !GetAtt MySqsQueue.Arn
+      Protocol: sqs
+      FilterPolicy:
+        type:
+        - orders
+        - payments 
+      RawMessageDelivery: 'true'
+
+  # Policy allows SNS to publish to this SQS queue
+  SnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow SNS publish to SQS"
+            Effect: Allow
+            Principal: "*"
+            Resource: !GetAtt MySqsQueue.Arn
+            Action: SQS:SendMessage
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref MySnsTopic
+      Queues:
+        - Ref: MySqsQueue
+
+Outputs:
+  MySqsQueueName:
+    Description: Queue name
+    Value: !GetAtt MySqsQueue.QueueName
+  MySnsTopicName:
+    Description: Topic name
+    Value: !GetAtt MySnsTopic.TopicName

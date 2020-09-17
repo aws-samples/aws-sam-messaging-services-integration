@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: messaging-eventbridge-example
+  
+Resources:
+  EventPublisherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: code/
+      Handler: publisher.handler
+      Timeout: 3
+      Runtime: nodejs12.x
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Resource: '*'
+            Action:
+              - events:PutEvents      
+
+  EventConsumerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: code/
+      Handler: consumer.handler
+      Timeout: 3
+      Runtime: nodejs12.x
+
+  EventRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "EventRule"
+      EventPattern: 
+        source: 
+          - "demo.event"
+        detail: 
+          state: 
+            - "new"
+      State: "ENABLED"
+      Targets: 
+        - Arn: !GetAtt EventConsumerFunction.Arn
+          Id: "ConsumerTarget"
+
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: 
+        Ref: "EventConsumerFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt EventRule.Arn
+
+
