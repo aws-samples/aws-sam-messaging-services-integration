@@ -1,6 +1,7 @@
-# Messages services in serverless applications
+# Messaging services in serverless applications
 
-The examples in this repo are used in related messaging blog posts. You can read through the blog posts at: TBD.
+The examples in this repo are used in related messaging blog posts. You can read the blog posts at:
+- https://aws.amazon.com/blogs/compute/choosing-between-messaging-services-for-serverless-applications/
 
 Important: these applications use various AWS services and there are costs associated with these services after the Free Tier usage. Please see the [AWS Pricing page](https://aws.amazon.com/pricing/) for details. You are responsible for any AWS costs incurred. No warranty is implied in these examples.
 
