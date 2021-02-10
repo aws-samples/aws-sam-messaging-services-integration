@@ -28,7 +28,7 @@ exports.handler = async (event) => {
     TopicArn: process.env.SNStopic
   }
   
-  // Send to SQS
+  // Send to SNS
   const result = await sns.publish(params).promise()
   console.log(result)
 }
