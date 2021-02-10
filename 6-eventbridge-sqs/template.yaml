@@ -38,7 +38,7 @@ Resources:
         - Arn: !GetAtt MySqsQueue.Arn
           Id: "SQSqueue"
 
-  # Use AWS::SNS::Subscription resource to apply filter policy
+  # Allow EventBridge to invoke SQS
   EventBridgeToToSqsPolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
