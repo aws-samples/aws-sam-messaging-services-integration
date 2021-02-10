@@ -19,7 +19,7 @@ Resources:
         - Arn: !Ref MySnsTopic
           Id: "SNStopic"
 
-  # Use AWS::SNS::Subscription resource to apply filter policy
+  # Allow EventBridge to invoke SNS
   EventBridgeToToSnsPolicy:
     Type: AWS::SNS::TopicPolicy
     Properties: 
